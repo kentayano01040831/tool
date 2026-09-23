@@ -12,8 +12,6 @@ import android.os.IBinder
 import android.provider.Settings
 import android.view.Gravity
 import android.view.WindowManager
-import android.view.inputmethod.InputMethodManager
-import android.content.Context
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -58,20 +56,17 @@ class FloatingCalculatorService : Service() {
             setPadding(24, 16, 24, 16)
             setBackgroundColor(Color.rgb(28, 28, 32))
         }
-        val title = TextView(this).apply {
-            text = "単価比較  ⋮  長押しで移動"
+        root.addView(TextView(this).apply {
+            text = "単価比較"
             textSize = 18f; setTextColor(Color.WHITE); setPadding(0, 0, 0, 8)
-        }
-        root.addView(title)
-        val aPrice = field("商品A 価格")
-        val aQty = field("商品A 数量")
-        val bPrice = field("商品B 価格")
-        val bQty = field("商品B 数量")
+        })
+        val aPrice = field("商品A 価格"); val aQty = field("商品A 数量")
+        val bPrice = field("商品B 価格"); val bQty = field("商品B 数量")
         listOf(aPrice, aQty, bPrice, bQty).forEach { root.addView(it) }
         val result = TextView(this).apply { setTextColor(Color.WHITE); textSize = 15f; setPadding(0, 8, 0, 8) }
         root.addView(result)
         val buttons = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        val calc = Button(this).apply {
+        buttons.addView(Button(this).apply {
             text = "計算"
             setOnClickListener {
                 val ap = aPrice.text.toString().toDoubleOrNull(); val aq = aQty.text.toString().toDoubleOrNull()
@@ -84,15 +79,14 @@ class FloatingCalculatorService : Service() {
                     result.text = "A: %.2f円/個\nB: %.2f円/個\n安い方: %s\n差額: %.2f円/個".format(ua, ub, cheaper, abs(ua - ub))
                 }
             }
-        }
-        val close = Button(this).apply { text = "閉じる"; setOnClickListener { stopSelf() } }
-        buttons.addView(calc, LinearLayout.LayoutParams(0, -2, 1f)); buttons.addView(close, LinearLayout.LayoutParams(0, -2, 1f))
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        buttons.addView(Button(this).apply { text = "閉じる"; setOnClickListener { stopSelf() } }, LinearLayout.LayoutParams(0, -2, 1f))
         root.addView(buttons)
         panel = root
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else WindowManager.LayoutParams.TYPE_PHONE
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT, type,
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM.inv(),
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         ).apply { gravity = Gravity.TOP; y = 48; softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE }
         wm?.addView(panel, params)
