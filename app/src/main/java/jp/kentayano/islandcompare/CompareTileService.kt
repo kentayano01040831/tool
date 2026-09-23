@@ -2,9 +2,11 @@ package jp.kentayano.islandcompare
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
+import androidx.core.content.ContextCompat
 
 /** Quick Settings tile: opens the calculator directly as a floating panel. */
 class CompareTileService : TileService() {
@@ -18,7 +20,12 @@ class CompareTileService : TileService() {
             startActivityAndCollapse(intent)
             return
         }
-        startService(Intent(this, FloatingCalculatorService::class.java))
+        val serviceIntent = Intent(this, FloatingCalculatorService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ContextCompat.startForegroundService(this, serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
         qsTile?.state = Tile.STATE_ACTIVE
         qsTile?.updateTile()
     }
