@@ -226,7 +226,7 @@ const OPTS=[
  ["spd","セリフ表示速度",[["slow","ゆっくり"],["norm","通常"]]],
  ["se","効果音",[[1,"ON"],[0,"OFF"]]],
  ["vib","振動（Androidのみ）",[[1,"ON"],[0,"OFF"]]],
- ["tts","音声（AI音声ファイル）",[[1,"ON"],[0,"OFF"]]],
+ ["tts","音声（端末の日本語読み上げ）",[[1,"ON"],[0,"OFF"]]],
  ["ga","全体ゲージ",[[1,"ON"],[0,"OFF"]]],
  ["gt","ターン別ゲージ",[[1,"ON"],[0,"OFF"]]],
 ];
@@ -296,9 +296,17 @@ const Voice=(()=>{
   const u=urls[idx++],c=C.get(u);ended=false;playedMs=0;curDur=(c&&c.dur)||12;state="playing";
   try{const a=el();a.muted=false;a.src=u;a.volume=cfg.tv/100;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{blocked=true;ended=true})}catch(e){ended=true}
  }
- function play(e){ /* 表示と同時に再生開始。同じ台詞は1回だけ */
-  if(!cfg.tts||!e.clips||e.played)return;e.played=true;
-  const u=okUrls(e);if(!u.length)return;urls=u;idx=0;startNext();
+ function play(e){ /* 音声ファイルがあれば優先。なければ端末の日本語音声で読み上げ */
+  if(!cfg.tts||e.played)return;e.played=true;
+  const u=e.clips?okUrls(e):[];
+  if(u.length){urls=u;idx=0;startNext();return}
+  if("speechSynthesis" in window){
+   try{speechSynthesis.cancel();const msg=[e.main,e.sub].filter(Boolean).join("。");if(!msg)return;
+    const utter=new SpeechSynthesisUtterance(msg);utter.lang="ja-JP";utter.volume=cfg.tv/100;utter.rate=cfg.spd==="slow"?0.88:1;
+    const ja=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith("ja"));if(ja)utter.voice=ja;
+    state="speaking";utter.onend=()=>{if(state==="speaking"){state="idle";lastEnd=gt}};utter.onerror=()=>{state="idle";lastEnd=gt};speechSynthesis.speak(utter);
+   }catch(e){state="idle"}
+  }
  }
  function playUrls(list){urls=list;idx=0;startNext()}
  /* ゲーム時間とは独立。実時間のdtで音声の進行だけを管理（一時停止中は呼ばれない） */
@@ -307,11 +315,11 @@ const Voice=(()=>{
    if(ended||playedMs>curDur*1000+3000){if(!ended)try{el().pause()}catch(e){}state="gap";gapLeft=350}}
   else if(state==="gap"){gapLeft-=dt;if(gapLeft<=0)startNext()}
  }
- const busy=()=>state==="playing"||state==="gap";
+ const busy=()=>state==="playing"||state==="gap"||state==="speaking";
  const free=()=>!busy()&&gt>=lastEnd+1000; /* 音声終了後に約1秒の間を置く */
- function pause(){if(state==="playing")try{el().pause()}catch(e){}}
- function resume(){if(state==="playing")try{const pr=el().play();if(pr&&pr.catch)pr.catch(()=>{ended=true})}catch(e){ended=true}}
- function stop(){state="idle";urls=[];idx=0;lastEnd=-1e9;if(A){try{A.pause();A.removeAttribute("src")}catch(e){}}}
+ function pause(){if(state==="playing")try{el().pause()}catch(e){}if(state==="speaking"&&"speechSynthesis" in window)try{speechSynthesis.pause()}catch(e){}}
+ function resume(){if(state==="playing")try{const pr=el().play();if(pr&&pr.catch)pr.catch(()=>{ended=true})}catch(e){ended=true}if(state==="speaking"&&"speechSynthesis" in window)try{speechSynthesis.resume()}catch(e){}}
+ function stop(){state="idle";urls=[];idx=0;lastEnd=-1e9;if("speechSynthesis" in window)try{speechSynthesis.cancel()}catch(e){}if(A){try{A.pause();A.removeAttribute("src")}catch(e){}}}
  function drain(){urls=urls.slice(0,idx)} /* 再生中の1本だけ最後まで流す */
  function unlock(){if(!cfg.tts)return;try{const a=el();a.muted=true;a.src=SIL;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}}
  return {probe,preload,ready,dur,play,playUrls,tick,busy,free,pause,resume,stop,drain,unlock,get blocked(){return blocked}};
@@ -327,7 +335,7 @@ async function scanVoice(){
 async function testVoice(){
  const note=$("vnote"),url=clipUrl(cfg.theme,"start_01");Voice.stop();Voice.unlock();note.textContent="確認中…";
  const c=await Voice.probe(url);
- if(!c.ok){note.textContent="音声ファイルが見つかりません："+url;return}
+ if(!c.ok){if("speechSynthesis" in window){const u=new SpeechSynthesisUtterance("音声テストです。読み上げが聞こえますか？");u.lang="ja-JP";u.volume=cfg.tv/100;const ja=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith("ja"));if(ja)u.voice=ja;speechSynthesis.cancel();speechSynthesis.speak(u);note.textContent="音声ファイル未配置のため、端末の日本語音声でテストしています。";return}note.textContent="音声ファイルが見つかりません："+url;return}
  Voice.playUrls([url]);note.textContent="再生中："+url;
 }
 (function(){$("tv").value=cfg.tv;$("tvv").textContent=cfg.tv;
