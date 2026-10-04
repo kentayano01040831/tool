@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ドキドキ・チャレンジ</title>
+<style>
+:root{--bg:#06180f;--fg:#f4fff8;--pink:#ff5fa2;--c1:#0b3d22;--c2:#06180f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:"Hiragino Sans","Noto Sans JP",sans-serif;overflow:hidden;
+background-image:radial-gradient(circle at 20% 15%,rgba(255,95,162,.18),transparent 45%),radial-gradient(circle at 80% 85%,rgba(60,200,120,.2),transparent 50%),linear-gradient(160deg,var(--c1),var(--c2));
+--bk:255,95,162;--bk2:60,200,120}
+body.GREEN{--c1:#0b3d22;--c2:#06180f}
+body.PAUSE{--c1:#4a0c14;--c2:#1c0509;--bk:255,70,80;--bk2:255,120,90}
+body.FINAL{--c1:#1f8f4a;--c2:#0b4a26;--bk:255,255,255;--bk2:150,255,190}
+#fx,#vig{position:fixed;inset:0;pointer-events:none;z-index:0}
+#vig{background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.55) 100%)}
+.bk{position:absolute;border-radius:50%;filter:blur(18px);opacity:0;animation:fl linear infinite}
+.bk.a{background:radial-gradient(circle,rgba(var(--bk),.55),rgba(var(--bk),0) 70%)}
+.bk.b{background:radial-gradient(circle,rgba(var(--bk2),.5),rgba(var(--bk2),0) 70%)}
+@keyframes fl{0%{transform:translate(0,40px) scale(.7);opacity:0}20%{opacity:.9}80%{opacity:.7}100%{transform:translate(var(--dx),-110vh) scale(1.2);opacity:0}}
+body.PAUSE #vig{animation:pl 2.4s ease-in-out infinite}
+@keyframes pl{50%{background:radial-gradient(ellipse at center,rgba(255,40,60,.12) 30%,rgba(0,0,0,.6) 100%)}}
+body.FINAL #vig{animation:pl2 1s ease-in-out infinite}
+@keyframes pl2{50%{background:radial-gradient(ellipse at center,rgba(190,255,210,.18) 30%,rgba(0,0,0,.4) 100%)}}
+body.soft #vig{animation-duration:4s}
+body[data-fx="0"] #fx{display:none}body[data-fx="0"] #vig{animation:none!important}
+body[data-fx="1"] #fx{opacity:.45}body[data-fx="1"] #vig{animation-duration:4s}
+body.paused .bk,body.paused #vig{animation-play-state:paused}
+#app{position:relative;z-index:1;height:100%;display:flex;align-items:center;justify-content:center;padding:14px;text-align:center}
+.scr{width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;gap:14px;max-height:100%}
+#setup{gap:10px;overflow-y:auto;padding:4px 2px}
+h1{font-size:22px;margin:0;color:var(--pink)}
+.row{width:100%;text-align:left}.row b{display:block;font-size:12px;color:#ffd3e6;margin-bottom:5px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+button{font:inherit;font-weight:800;font-size:20px;color:#fff;background:var(--pink);border:0;border-radius:99px;padding:15px 44px;box-shadow:0 6px 22px rgba(255,95,162,.45)}
+button:active{transform:scale(.97)}
+.seg button{flex:1 1 auto;min-width:54px;min-height:42px;font-size:14px;font-weight:600;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);box-shadow:none}
+.seg button.on{background:var(--pink);border-color:var(--pink)}
+.seg.th button{flex:1 1 100%;text-align:left}.seg.th small{display:block;font-weight:400;opacity:.8;font-size:11px}
+#custom{width:100%;margin-top:6px;min-height:42px;border-radius:12px;border:1px solid var(--pink);background:rgba(0,0,0,.35);color:#fff;font-size:16px;padding:6px 12px}
+.sm{font-size:13px;font-weight:600;padding:9px 16px;min-height:40px;background:rgba(0,0,0,.35);border:1px solid rgba(255,95,162,.6);color:#ffd3e6;box-shadow:none}
+#state{font-size:13px;letter-spacing:.2em;color:var(--pink);font-weight:700}
+#main{font-size:clamp(28px,8.5vw,50px);font-weight:800;line-height:1.3;min-height:3.9em;display:flex;align-items:center;justify-content:center;text-shadow:0 2px 14px rgba(0,0,0,.5)}
+#sub{font-size:clamp(16px,4.5vw,22px);color:#ffd3e6;min-height:2.6em}
+.gw{width:100%;display:flex;flex-direction:column;gap:9px}
+.g small{display:flex;justify-content:space-between;font-size:11px;opacity:.85;margin-bottom:3px}
+.tr{position:relative;height:12px;background:rgba(255,255,255,.14);border-radius:99px;overflow:hidden}
+.tr i{display:block;height:100%;width:0;border-radius:99px;position:relative;z-index:1}
+#gA .tr::after{content:"";position:absolute;right:0;top:0;bottom:0;width:var(--fp,5%);background:rgba(255,95,162,.4);border-left:1px solid rgba(255,255,255,.5)}
+#aF{background:linear-gradient(90deg,#3cc878,#8cf0b4)}body.FINAL #aF{background:linear-gradient(90deg,#ffb3d3,#fff)}
+#gT .tr{height:8px}#tF{background:var(--pink)}
+body.GREEN #tF{background:#4be08a}body.PAUSE #tF{background:#ff5a64}body.FINAL #tF{background:#fff}
+.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+#rtl{font-size:26px;font-weight:800;color:var(--pink)}#rm{font-size:clamp(24px,7vw,36px);font-weight:800;line-height:1.35}
+#rsub{color:#ffd3e6;font-size:18px}.meta{font-size:14px;opacity:.85;line-height:1.7}
+#pz{position:fixed;inset:0;z-index:5;background:rgba(0,0,0,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+#pz h2{margin:0;font-size:28px}
+#pn{background:rgba(255,95,162,.28)}#pn:disabled{opacity:.4}
+#vbox{width:100%;display:flex;flex-direction:column;gap:9px}#vbox input[type=range]{width:100%;accent-color:var(--pink)}
+.vr{display:flex;gap:6px}.vr .sm{flex:1}#vnote{font-size:11px;opacity:.8;text-align:left}
+.hide{display:none!important}
+</style></head><body class="READY" data-fx="2">
+<div id="fx"></div><div id="vig"></div>
+<div id="app">
+<section id="setup" class="scr">
+ <h1>ドキドキ・チャレンジ</h1>
+ <div id="opts" style="width:100%;display:flex;flex-direction:column;gap:9px"></div>
+ <div id="vbox">
+  <div class="row"><b>音量 <span id="tvv"></span>%</b><input type="range" id="tv" min="0" max="100" step="5"></div>
+  <div class="row"><b>音声ファイル</b><div class="vr"><button class="sm" id="vtest">音声テスト</button><button class="sm" id="vscan">読み込み確認</button></div><div id="vnote"></div></div>
+ </div>
+ <input id="custom" type="number" min="1" max="120" step="1" value="7" class="hide" aria-label="カスタム時間（分）">
+ <div id="rec" class="meta" style="font-size:12px"></div>
+ <button id="go">スタート</button>
+</section>
+<section id="play" class="scr hide">
+ <div id="state">READY</div>
+ <div id="main"></div><div id="sub"></div>
+ <div class="gw">
+  <div class="g" id="gA"><small><span>全体</span><span id="aP">0%</span></small><div class="tr"><i id="aF"></i></div></div>
+  <div class="g" id="gT"><small><span id="tL">ターン</span><span id="tP">0%</span></small><div class="tr"><i id="tF"></i></div></div>
+ </div>
+ <div class="btns"><button class="sm" id="pb">一時停止</button><button class="sm" id="pn">我慢できなさそう…</button><button class="sm" id="gu">がまんできなかった…（申告）</button></div>
+</section>
+<section id="result" class="scr hide">
+ <div id="rtl"></div><div id="rm"></div><div id="rsub"></div>
+ <div class="meta"><div id="rtime"></div><div id="rth"></div></div>
+ <button id="again">もう一度プレイ</button><button class="sm" id="back">設定画面へ戻る</button>
+</section>
+</div>
+<div id="pz" class="hide"><h2>⏸ 一時停止中</h2><button id="rsm">再開</button><button class="sm" id="rst">リセット（設定へ戻る）</button></div>
+<script>
+const $=id=>document.getElementById(id);
+const R=(a,b)=>a+Math.random()*(b-a);
+const arr=a=>a[Math.floor(Math.random()*a.length)];
+
+/* ================= セリフデータ（ここを編集すれば追加・変更できます） =================
+ グループ: G(ウェイト, [セリフ...], {p:[開始,終了] 進捗範囲 / stage:最終フェーズ段階 / nf:開始直後・休憩明けは不可 / hot:強いペース})
+ セリフは "大きい文|小さい文" の形式（"|"なしは1文のみ） */
+const G=(w,items,o)=>Object.assign({w,items},o);
+const PACE={ /* ペース指示（テーマ共通・GREENの大きい文） */
+ slow:G(4,["ゆっくりにしよっか","ペースを落として","少し緩めてみて","ゆるめにいこっか"]),
+ fast:G(2,["少しペースを上げて","ちょっと速くしよっか","テンポ上げてみよっか"],{nf:1,hot:1}),
+ light:G(3,["指先だけで軽く","そっと、やさしく","触れるか触れないか、くらいで"]),
+ keep:G(3,["そのままキープ","今のペースでね","このまま続けて"],{nf:1})};
+const CUE={c:G(1,["手を離して休憩","手を止めて深呼吸","手はそのまま、休憩だよ","いったん手を離してね"])};
+
+const DEVIL={name:"小悪魔な彼女",desc:"意地悪でからかい上手。ときどき褒めてくれる",
+ START:["ふふ、始めよっか♡|まずは軽く動かしてみてね♪"],
+ GU:["あーあ、がまんできなかったね♡|ここまでよく頑張ったよ。次は粘れるかな〜？","ふふ、ちょっと早かったかな？|正直に言えて偉いね。また挑戦する？"],
+ GREEN:{
+  g0:G(3,["ふふ、始まったね♡","まずは様子見かな〜","ちゃんとついてこれる？笑"],{p:[0,.2]}),
+  g1:G(3,["お、慣れてきた？","いい子いい子、その調子","余裕そうな顔しちゃって"],{p:[.2,.4]}),
+  g2:G(3,["そろそろ本音が出るころかな？","ふふ、えらいえらい♡","ねぇ、もう焦ってない？"],{p:[.4,.6]}),
+  g3:G(3,["ここからが本番だよ？","ゴールが見えてきたね〜♪","まだ気は抜かせないよ♡"],{p:[.6,.8]}),
+  g4:G(3,["ドキドキしてきた？笑","あと少し、ちゃんと耐えてね","いい顔してる、最高♡"],{p:[.8,.95]}),
+  mx:G(2,["ふふ、ちゃんと見てるからね♡","いい反応するじゃん","そんなに慌てなくてもいいのに♡","素直でよろしい♪"])},
+ PAUSE:{a:G(3,["ふふ、ここでおあずけ♡","勝手に動いたらダメだよ？","じらされるの、好きでしょ？","慌てないの、ふふっ"])},
+ FINAL:{
+  a:G(3,["いっぱい頑張ったね、えらいえらい♡|ちゃんと見てたよ","ここまでよく頑張ったね|ふふ、ちょっと感動","最後までちゃんと見てたよ|目、離してないからね","すごいじゃん、ここまで来たよ|私も嬉しくなっちゃう"],{stage:0}),
+  b:G(3,["もう無理しなくていいよ♡|よくできました","もう肩の力を抜いていいからね|私に任せて？","ここまで我慢できたご褒美ね♡|ゆっくりでいいよ","よく頑張りました|もう楽にしていいよ♡"],{stage:1}),
+  c:G(3,["最後まで付き合ってくれてありがとう|楽しかったよ♡","ふふっ、もうゴールだね|ゆっくり息を整えてね","ほんとにえらい子だね|胸、張っていいよ","ゴールまで連れてきてくれたね|ありがと♡"],{stage:2})},
+ END:{e:G(1,["よく頑張りました。お疲れさま♡|ふふ、また遊んであげる","ゴール到達、おめでとう♡|ちょっとだけ見直したかな","最後までやりきったね|ご褒美にいっぱい褒めてあげる"])}};
+
+const ONEE={name:"優しいお姉さん",desc:"落ち着いた口調で励ましてくれる。安心感のある語りかけ",
+ START:["ゆっくり始めようね|無理しないでいいからね"],
+ GU:["大丈夫、また頑張ろうね|ここまでもよく頑張ったよ","うん、正直に教えてくれてありがとう|ゆっくり休んでね"],
+ GREEN:{
+  g0:G(3,["ゆっくりでいいからね","無理せず、楽しんでね","私がそばにいるから大丈夫"],{p:[0,.2]}),
+  g1:G(3,["うん、いい感じ","落ち着いてできてるよ","上手、その調子"],{p:[.2,.4]}),
+  g2:G(3,["とっても上手だよ","頑張ってるの、ちゃんと伝わってる","いい子、いい子"],{p:[.4,.6]}),
+  g3:G(3,["もう半分は過ぎたね","ここまで来れてえらいよ","焦らなくて大丈夫だからね"],{p:[.6,.8]}),
+  g4:G(3,["あと少し、一緒に頑張ろうね","ここまで来たの、すごいことだよ","ちゃんと見守ってるからね"],{p:[.8,.95]}),
+  mx:G(2,["うん、ちゃんと伝わってるよ","深呼吸も忘れずにね","とっても素敵だよ","その調子、その調子"])},
+ PAUSE:{a:G(3,["いったんお休みしようね","息をゆっくり吐いてみて","よく頑張ってるよ、少し休憩","楽にして、待っててね"])},
+ FINAL:{
+  a:G(3,["よく頑張ったね、えらいよ|ずっと見てたからね","ここまで本当によくできました|胸を張っていいよ","最後までちゃんと見てたよ|安心してね","とても立派だったよ|私も嬉しいな"],{stage:0}),
+  b:G(3,["もう無理しなくていいからね|ゆっくり力を抜いて","大丈夫、安心して|私がついてるよ","もう肩の力を抜いていいからね|よくできました","ここまでよく頑張りました|あとは楽にしてね"],{stage:1}),
+  c:G(3,["最後まで一緒にいてくれてありがとう|ほんとにえらいね","もうゴールだよ|ゆっくり休んでね","ちゃんとやりきったね|すごいよ","お疲れさま、ここまでおいで|よしよし"],{stage:2})},
+ END:{e:G(1,["お疲れさま。よく頑張りました|ゆっくり休んでね","やりきったね、すごいよ|いい子、いい子","最後までよくできました|また一緒にやろうね"])}};
+
+const mix=(a,b,x)=>{const o={};for(const s of ["GREEN","PAUSE","FINAL","END"]){o[s]={};
+ for(const[k,v]of Object.entries(a[s]))o[s]["d"+k]=v;for(const[k,v]of Object.entries(b[s]))o[s]["o"+k]=v;Object.assign(o[s],x[s])}return o};
+const WHIM=Object.assign({name:"気まぐれな彼女",desc:"優しかったり意地悪だったり。態度が読めない",
+ START:["さて、今日はどっちの私かな？|まずは軽く動かしてみてね♪"],
+ GU:["あらら、気まぐれに終わっちゃったね|次はもっと粘れるかな？","ふふ、今日はここまで|でも悪くなかったよ"]},
+ mix(DEVIL,ONEE,{
+  GREEN:{m:G(2,["えっと、今ちょっと気分変わった","やっぱりやめた…って言うと思った？笑","んー、今日は優しくしちゃおっかな","気が変わったよ、ふふっ"])},
+  PAUSE:{m:G(2,["止まって。理由はないよ、気分♪","休憩ね…あ、やっぱりもう少しだけ","今のうちに息しとこ？気まぐれだけど"])},
+  FINAL:{m0:G(2,["今日はなんか褒めたい気分|えらいえらい","ふふ、思ったよりやるじゃん|見直しちゃった"],{stage:0}),
+   m1:G(2,["気分いいから、特別に許してあげる|ふふ、今日だけだよ","今日はもう頑張らなくていいよ|気が向いたからね"],{stage:1}),
+   m2:G(2,["最後まで付き合ってくれたから、ご褒美♡|ふふっ、ゴールだよ","気まぐれだけど、これは本気で言うね|ありがとう"],{stage:2})},
+  END:{m:G(1,["気まぐれだけど、今日は満点♡|また気が向いたら遊んであげる","お疲れさま。今日の私は大満足|ふふ、またね"])}}));
+const THEMES={devil:DEVIL,onee:ONEE,whim:WHIM};
+/* セリフ追加（各グループに追記する形式。後から足す場合も X(テーマ,状態,グループ,[...]) を書き足すだけ） */
+const X=(t,st,g,a)=>t[st][g].items.push(...a);
+X(DEVIL,"GREEN","g0",["ほら、深呼吸してから始めよ？","最初から飛ばしちゃダメだよ","ふふ、緊張してる？"]);
+X(DEVIL,"GREEN","g1",["慣れてきたころが一番危ないんだよ？","ふふ、いい調子じゃん","私のペース、感じてきた？"]);
+X(DEVIL,"GREEN","g2",["ちょっとずつ顔に出てきてるよ","可愛いとこ、見せてよ♡","まだまだこれからでしょ？"]);
+X(DEVIL,"GREEN","g3",["ここまで耐えるなんてやるじゃん","ほら、気をそらさないの","半分過ぎたよ、えらいえらい"]);
+X(DEVIL,"GREEN","g4",["ねぇ、もう限界って顔してる♡","あとちょっとだから、ね？","ここで気を抜いたらもったいないよ"]);
+X(DEVIL,"GREEN","mx",["私のこと、ちゃんと見ててよ♡","そんなに必死になっちゃって","ふふっ、素直で可愛い","いい子にしてたら、ご褒美あげる"]);
+X(DEVIL,"PAUSE","a",["今は我慢の時間だよ♡","ふふ、手持ち無沙汰？","息を整えて、ね？","こういうのも悪くないでしょ？"]);
+X(DEVIL,"FINAL","a",["ここまで来るなんて、ちょっと見直した|よく頑張ったね","えらいえらい、いっぱい褒めてあげる♡|もう少しだよ","ちゃんと我慢できたの、見てたよ|すごいね♡"]);
+X(DEVIL,"FINAL","b",["もう我慢しなくていいんだよ♡|いい子だったね","力、抜いちゃっていいよ|ちゃんとここにいるから","がんばったご褒美、あげる♡|楽にしてね"]);
+X(DEVIL,"FINAL","c",["ほら、ゴールだよ|ふふ、よくできました","ありがとね、楽しかった♡|ゆっくり休んで","最後まで本当にえらかったよ|お疲れさま♡"]);
+X(DEVIL,"END","e",["やりきったじゃん、お疲れさま♡|また付き合ってあげる","よくできました、花丸あげる♡|ゆっくり休んでね"]);
+X(ONEE,"GREEN","g0",["深呼吸から始めようね","焦らなくても大丈夫だよ","楽な姿勢で、ゆっくりね"]);
+X(ONEE,"GREEN","g1",["うん、リズムがつかめてきたね","その調子で大丈夫","無理してないかな？大丈夫そうだね"]);
+X(ONEE,"GREEN","g2",["ここまでとても順調だよ","自分のペースを大事にしてね","頑張りすぎなくていいからね"]);
+X(ONEE,"GREEN","g3",["折り返しを過ぎたね、すごいよ","いい感じ、そのまま行こうね","私はずっと味方だからね"]);
+X(ONEE,"GREEN","g4",["ゴールがもう近いよ","ここまで頑張ってきたあなたはえらいよ","最後までそばにいるからね"]);
+X(ONEE,"GREEN","mx",["うんうん、上手だよ","ゆっくり息をしてね","無理だと思ったら教えてね","安心してね、ここにいるよ"]);
+X(ONEE,"PAUSE","a",["ここで少し休もうね","肩の力を抜いてみてね","のんびりしていいんだよ","呼吸が落ち着くまで待つね"]);
+X(ONEE,"FINAL","a",["ここまで本当に頑張ったね|えらいえらい","最後まで見守ってるよ|大丈夫","とってもよく頑張ってるよ|誇らしいな"]);
+X(ONEE,"FINAL","b",["もう頑張らなくて大丈夫だよ|ゆっくりね","安心して、力を抜いてね|よしよし","ここまで来れたの、あなたのおかげだよ|楽にしてね"]);
+X(ONEE,"FINAL","c",["ゴールだよ、よく頑張ったね|おめでとう","ありがとう、最後まで一緒にいてくれて|嬉しかったよ","ゆっくり休んでね|おつかれさま"]);
+X(ONEE,"END","e",["おつかれさま、よく頑張りました|今日はゆっくり休もうね","すてきな時間をありがとう|またいつでもおいで"]);
+/* 「我慢できなさそう」ボタンを押したときの声かけ（大きい文|小さい文） */
+DEVIL.RESC=["手を離して、いったん休憩♡|ふふ、限界？ちゃんと言えて偉いね","ストップ。深呼吸して|慌てないの、まだ間に合うよ","手を止めて、ね？|危なかったね、ふふっ","ちゃんと教えてくれたね|ご褒美に少し休ませてあげる"];
+ONEE.RESC=["手を離して、ゆっくり休もうね|言ってくれてありがとう","大丈夫、いったん止めようね|深呼吸して、落ち着いて","ストップ、無理しなくていいよ|えらいね、ちゃんと伝えられて","手を止めて、楽にしてね|まだ大丈夫、焦らないで"];
+WHIM.RESC=DEVIL.RESC.concat(ONEE.RESC,["手を離して。…今のは優しい私ね|気分で決めたの"]);
+
+/* ================= セリフ抽選 =================
+ 直近2グループ・直近5セリフ・直前と同じ意味(グループ名)を避け、候補が無ければ段階的に緩和。
+ 進捗範囲(p)を持つグループは、範囲内のものを優先して抽選します。履歴はテーマ・状態ごとに独立管理 */
+let HS={},lastTag="",lastTxt="";
+const LV=[{gx:2,lx:5,tag:1},{gx:2,lx:5,tag:0},{gx:1,lx:5,tag:0},{gx:0,lx:5,tag:0},{gx:0,lx:2,tag:0},{gx:0,lx:0,tag:0}];
+const tl=(a,n)=>n>0?a.slice(-n):[];
+function choose(pool,key,o){
+ o=o||{};const h=HS[key]||(HS[key]={g:[],l:[]});
+ const names=Object.keys(pool).filter(n=>{const g=pool[n];return !(o.first&&g.nf)&&!(o.noHot&&g.hot)&&(o.stage===undefined||g.stage===o.stage)});
+ for(const strict of [1,0])for(const lv of LV){
+  const gb=tl(h.g,lv.gx),lb=tl(h.l,lv.lx),c=[];
+  for(const n of names){const g=pool[n];
+   if(gb.includes(n))continue;
+   if(strict&&g.p&&o.prog!==undefined&&(o.prog<g.p[0]||o.prog>=g.p[1]))continue;
+   if(!o.notag&&lv.tag&&n===lastTag)continue;
+   const it=g.items.filter(t=>!lb.includes(t)&&t!==lastTxt);
+   if(it.length)c.push({n,w:g.w,it});}
+  if(!c.length)continue;
+  let r=Math.random()*c.reduce((a,x)=>a+x.w,0),s=c[c.length-1];
+  for(const x of c){r-=x.w;if(r<=0){s=x;break}}
+  const t=arr(s.it);h.g.push(s.n);h.l.push(t);if(h.g.length>5)h.g.shift();if(h.l.length>5)h.l.shift();
+  lastTxt=t;if(!o.notag)lastTag=s.n;
+  return {t,g:s.n,i:Math.max(0,pool[s.n].items.indexOf(t))};
+ }
+ const g=pool[names[0]||Object.keys(pool)[0]];return {t:g.items[0],g:"",i:0};
+}
+
+/* ================= 設定 ================= */
+const cfg={time:5,custom:7,theme:"devil",diff:"normal",fx:2,spd:"norm",se:0,vib:0,ga:1,gt:1,tts:0,tv:80};
+try{const sv=JSON.parse(localStorage.getItem("dk_cfg")||"null");if(sv){for(const k in cfg)if(k!=="time"&&k in sv&&typeof sv[k]===typeof cfg[k])cfg[k]=sv[k];
+ if(sv.time==="c"||[3,5,8,10,15].includes(sv.time))cfg.time=sv.time}}catch(e){}
+if(!THEMES[cfg.theme])cfg.theme="devil";if(!["easy","normal","hard"].includes(cfg.diff))cfg.diff="normal";
+const saveCfg=()=>{try{localStorage.setItem("dk_cfg",JSON.stringify(cfg))}catch(e){}};
+let rec={tries:0,clears:0,best:0,gv:[],pn:[]};
+try{const r=JSON.parse(localStorage.getItem("dk_rec")||"null");if(r)rec=Object.assign(rec,r)}catch(e){}
+const saveRec=()=>{try{localStorage.setItem("dk_rec",JSON.stringify(rec))}catch(e){}};
+const recText=()=>rec.tries?"記録：完走 "+rec.clears+"回 ／ 挑戦 "+rec.tries+"回 ／ 最長 "+fmt(rec.best):"";
+const OPTS=[
+ ["time","プレイ時間（＋最終フェーズ1分）",[[3,"3分"],[5,"5分"],[8,"8分"],[10,"10分"],[15,"15分"],["c","カスタム"]]],
+ ["theme","プレイテーマ",Object.keys(THEMES).map(k=>[k,THEMES[k].name,THEMES[k].desc])],
+ ["diff","難易度",[["easy","ゆるめ"],["normal","標準"],["hard","きびしめ"]]],
+ ["fx","演出強度",[[0,"OFF"],[1,"控えめ"],[2,"通常"]]],
+ ["spd","セリフ表示速度",[["slow","ゆっくり"],["norm","通常"]]],
+ ["se","効果音",[[1,"ON"],[0,"OFF"]]],
+ ["vib","振動（Androidのみ）",[[1,"ON"],[0,"OFF"]]],
+ ["tts","音声（AI音声ファイル）",[[1,"ON"],[0,"OFF"]]],
+ ["ga","全体ゲージ",[[1,"ON"],[0,"OFF"]]],
+ ["gt","ターン別ゲージ",[[1,"ON"],[0,"OFF"]]],
+];
+(function(){const box=$("opts");
+ for(const[key,label,list]of OPTS){const row=document.createElement("div");row.className="row";
+  const b=document.createElement("b");b.textContent=label;row.appendChild(b);
+  const seg=document.createElement("div");seg.className="seg"+(key==="theme"?" th":"");
+  for(const[v,name,desc]of list){const bt=document.createElement("button");
+   bt.innerHTML=desc?name+"<small>"+desc+"</small>":name;if(cfg[key]===v)bt.className="on";
+   bt.onclick=()=>{cfg[key]=v;[...seg.children].forEach(x=>x.classList.remove("on"));bt.classList.add("on");if(key==="theme"&&typeof updVoiceInfo==="function")updVoiceInfo();
+    if(key==="time")$("custom").classList.toggle("hide",v!=="c")};
+   seg.appendChild(bt)}
+  row.appendChild(seg);box.appendChild(row)}
+ $("custom").value=cfg.custom;$("custom").classList.toggle("hide",cfg.time!=="c");
+ $("custom").oninput=()=>{cfg.custom=parseFloat($("custom").value)||5}})();
+
+/* ================= 音声（事前生成したAI音声ファイルを再生） =================
+ ★台詞と音声ファイルの対応は、この VOICE 設定と台詞ID(cid)だけで決まります。
+   ファイルのパス = VOICE.base + フォルダ名 + "/" + 台詞ID + "." + VOICE.ext
+   例: audio/mischievous/green_g0_01.mp3   （台詞ID一覧は付属の voice_script.csv を参照）
+ ・個別に差し替えたい台詞は VOICE.override に「"テーマ/台詞ID": "任意のURL"」で登録できます。
+ ・ブラウザ標準音声へのフォールバックはありません。ファイルが無い台詞は文字表示のみで進行します。
+ ・外部のAI音声APIのキーは、このHTMLに絶対に書かないでください（事前生成したファイルを置く運用です）。 */
+const VOICE={base:"audio/",ext:"mp3",folders:{devil:"mischievous",onee:"gentle",whim:"girlfriend"},override:{}};
+const VOICE_STYLE={ /* 音声生成時の演技指示（ゲーム内では声を加工しません） */
+ devil:{label:"いたずら好きな女の子",dir:"明るく親しみやすい声。少し小悪魔的で、からかうように語尾を軽く弾ませる。重要な台詞では少し声のトーンを落とす。"},
+ onee:{label:"優しいお姉さん",dir:"落ち着いた柔らかい声。ゆっくり話し、安心感のある自然な抑揚をつける。"},
+ whim:{label:"気まぐれな彼女",dir:"親密で自然な会話調。少し甘えたり拗ねたりするが、感情の切り替えは滑らかに。"}};
+const STATE_DIR={GREEN:"会話のテンポで自然に。",PAUSE:"ささやくように穏やかに。間を取る。",FINAL:"感情を込めて優しく、ゆっくり。",END:"余韻を残して、しっとりと。",START:"自然な挨拶として。",GU:"励ますように優しく。",RESC:"落ち着かせるように穏やかに。"};
+const clipUrl=(th,id)=>VOICE.override[th+"/"+id]||VOICE.base+VOICE.folders[th]+"/"+id+"."+VOICE.ext;
+const pad2=n=>String(n).padStart(2,"0"),cid=(pf,g,i)=>pf+"_"+g+"_"+pad2(i+1);
+/* 台詞リスト（ID・パス・本文・演技指示）。読み込み確認とCSV出力に使用。※各グループ内の並び順は変えず、追加は末尾に */
+function manifest(th){
+ const T=THEMES[th],rows=[],dir=st=>VOICE_STYLE[th].dir+STATE_DIR[st];
+ const add=(pf,pool,st)=>{for(const[g,v]of Object.entries(pool))v.items.forEach((t,i)=>rows.push({id:cid(pf,g,i),text:t.replace("|","。"),state:st,dir:dir(st)}))};
+ add("pace",PACE,"GREEN");add("cue",CUE,"PAUSE");add("green",T.GREEN,"GREEN");add("pause",T.PAUSE,"PAUSE");add("final",T.FINAL,"FINAL");add("end",T.END,"END");
+ T.START.forEach((t,i)=>rows.push({id:"start_"+pad2(i+1),text:t.replace("|","。"),state:"START",dir:dir("START")}));
+ T.GU.forEach((t,i)=>rows.push({id:"giveup_"+pad2(i+1),text:t.replace("|","。"),state:"GU",dir:dir("GU")}));
+ T.RESC.forEach((t,i)=>rows.push({id:cid("rescue","r",i),text:t.replace("|","。"),state:"RESC",dir:dir("RESC")}));
+ return rows.map(r=>Object.assign(r,{theme:th,folder:VOICE.folders[th],path:clipUrl(th,r.id)}));
+}
+const Voice=(()=>{
+ const C=new Map(),SIL="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=";
+ let A=null,state="idle",urls=[],idx=0,gapLeft=0,ended=false,playedMs=0,curDur=10,lastEnd=-1e9,blocked=false;
+ const el=()=>{if(!A){A=new Audio();A.onended=()=>{ended=true};A.onerror=()=>{ended=true}}return A};
+ /* ファイルの有無と長さの確認（結果はキャッシュ）。失敗しても例外は出さない */
+ function probe(url){
+  let c=C.get(url);if(c)return c.p;c={ok:null,dur:0};C.set(url,c);
+  c.p=new Promise(res=>{let done=false;const fin=ok=>{if(done)return;done=true;c.ok=ok;res(c)};
+   try{const a=new Audio();a.preload="auto";
+    a.onloadedmetadata=()=>{c.dur=isFinite(a.duration)?a.duration:0;fin(true)};a.onerror=()=>fin(false);
+    setTimeout(()=>fin(false),6000);a.src=url;if(a.load)a.load()}catch(e){fin(false)}});
+  return c.p;
+ }
+ const urlsOf=e=>e.clips.map(id=>clipUrl(cfg.theme,id));
+ const preload=e=>{if(cfg.tts&&e.clips)urlsOf(e).forEach(probe)};
+ /* 表示の準備ができたか（未確認なら最大0.8秒だけ待つ。それ以降は文字のみで表示） */
+ function ready(e){
+  if(!cfg.tts||!e.clips)return true;
+  if(urlsOf(e).every(u=>{const c=C.get(u);return c&&c.ok!==null}))return true;
+  e.w0=e.w0||performance.now();return performance.now()-e.w0>800;
+ }
+ const okUrls=e=>urlsOf(e).filter(u=>{const c=C.get(u);return c&&c.ok});
+ const dur=e=>{if(!cfg.tts||!e.clips)return 0;const u=okUrls(e);return u.reduce((a,x)=>a+(C.get(x).dur||6),0)+Math.max(0,u.length-1)*.35};
+ function startNext(){
+  if(idx>=urls.length){state="idle";lastEnd=gt;return}
+  const u=urls[idx++],c=C.get(u);ended=false;playedMs=0;curDur=(c&&c.dur)||12;state="playing";
+  try{const a=el();a.muted=false;a.src=u;a.volume=cfg.tv/100;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{blocked=true;ended=true})}catch(e){ended=true}
+ }
+ function play(e){ /* 表示と同時に再生開始。同じ台詞は1回だけ */
+  if(!cfg.tts||!e.clips||e.played)return;e.played=true;
+  const u=okUrls(e);if(!u.length)return;urls=u;idx=0;startNext();
+ }
+ function playUrls(list){urls=list;idx=0;startNext()}
+ /* ゲーム時間とは独立。実時間のdtで音声の進行だけを管理（一時停止中は呼ばれない） */
+ function tick(dt){
+  if(state==="playing"){playedMs+=dt;
+   if(ended||playedMs>curDur*1000+3000){if(!ended)try{el().pause()}catch(e){}state="gap";gapLeft=350}}
+  else if(state==="gap"){gapLeft-=dt;if(gapLeft<=0)startNext()}
+ }
+ const busy=()=>state==="playing"||state==="gap";
+ const free=()=>!busy()&&gt>=lastEnd+1000; /* 音声終了後に約1秒の間を置く */
+ function pause(){if(state==="playing")try{el().pause()}catch(e){}}
+ function resume(){if(state==="playing")try{const pr=el().play();if(pr&&pr.catch)pr.catch(()=>{ended=true})}catch(e){ended=true}}
+ function stop(){state="idle";urls=[];idx=0;lastEnd=-1e9;if(A){try{A.pause();A.removeAttribute("src")}catch(e){}}}
+ function drain(){urls=urls.slice(0,idx)} /* 再生中の1本だけ最後まで流す */
+ function unlock(){if(!cfg.tts)return;try{const a=el();a.muted=true;a.src=SIL;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}}
+ return {probe,preload,ready,dur,play,playUrls,tick,busy,free,pause,resume,stop,drain,unlock,get blocked(){return blocked}};
+})();
+/* 設定画面：音声テスト・読み込み確認・状態表示 */
+function updVoiceInfo(){$("vnote").textContent="フォルダ："+VOICE.base+VOICE.folders[cfg.theme]+"/　（未確認。「読み込み確認」で調べられます。ファイルが無くてもゲームは動作します）"}
+async function scanVoice(){
+ const list=manifest(cfg.theme),n=list.length;let ok=0,ng=0,i=0;const note=$("vnote");
+ const worker=async()=>{while(i<n){const r=list[i++];const c=await Voice.probe(r.path);c.ok?ok++:ng++;if((ok+ng)%6===0)note.textContent="確認中… "+(ok+ng)+"/"+n}};
+ note.textContent="確認中… 0/"+n;await Promise.all([worker(),worker(),worker(),worker(),worker(),worker()]);
+ note.textContent="読み込み可 "+ok+"件 ／ 未配置・失敗 "+ng+"件（全"+n+"件）　フォルダ："+VOICE.base+VOICE.folders[cfg.theme]+"/";
+}
+async function testVoice(){
+ const note=$("vnote"),url=clipUrl(cfg.theme,"start_01");Voice.stop();Voice.unlock();note.textContent="確認中…";
+ const c=await Voice.probe(url);
+ if(!c.ok){note.textContent="音声ファイルが見つかりません："+url;return}
+ Voice.playUrls([url]);note.textContent="再生中："+url;
+}
+(function(){$("tv").value=cfg.tv;$("tvv").textContent=cfg.tv;
+ $("tv").oninput=()=>{cfg.tv=+$("tv").value;$("tvv").textContent=cfg.tv};
+ $("vtest").onclick=testVoice;$("vscan").onclick=scanVoice;updVoiceInfo()})();
+
+/* ================= ゲーム状態 ================= */
+let running=false,paused=false,loopId=0,last=0,AC=null;
+let gt=0,total=0,finalStart=0,outroStart=0,FL=0,mins=0,st="READY",tStart=0,tLen=1,turnPicks=0,hotUsed=0,outro=false;
+let cd=0,cdN=0,pinches=0,pnCool=0,risks=[],WL=null;
+const DIFF={easy:{g:[12,24],p:[10,18],hot:0},normal:{g:[15,30],p:[8,16],hot:1},hard:{g:[20,40],p:[6,12],hot:2}};
+/* 我慢できなさそう申告後／過去に危なかった付近は「ゆるめ」に自動調整 */
+const mild=()=>pinches>0||risks.some(x=>Math.abs(x-gt/total)<.08);
+function vib(p){if(cfg.vib&&navigator.vibrate)try{navigator.vibrate(p)}catch(e){}}
+async function wl(on){try{if(on&&navigator.wakeLock){WL=await navigator.wakeLock.request("screen")}else if(WL){await WL.release();WL=null}}catch(e){}}
+let Q=[],cur=null,holdUntil=0,shownAt=0,nextPick=0,rGu=0,rRst=0;
+const T=()=>THEMES[cfg.theme];
+const sp=()=>cfg.spd==="slow"?1.3:1;
+const fmt=ms=>{const s=Math.round(ms/1000);return Math.floor(s/60)+"分"+("0"+s%60).slice(-2)+"秒"};
+function beep(seq){if(!cfg.se||!AC)return;try{let t=AC.currentTime;for(const f of seq){const o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.value=f;
+ g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.08,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.35);
+ o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.4);t+=.18}}catch(e){}}
+function setSt(s){st=s;const c=document.body.classList;["READY","GREEN","PAUSE","FINAL","FINISH"].forEach(x=>c.remove(x));c.add(s);$("state").textContent=s}
+
+/* ---- セリフ表示（キュー式。表示時間と抽選タイミングは別管理。時間はゲーム時間なので一時停止で止まる） ---- */
+function mk(state){
+ const prog=gt/total;let m,s,clips=[];
+ if(state==="GREEN"){const p=choose(PACE,"pace",{first:turnPicks===0,noHot:hotUsed>=(mild()?0:DIFF[cfg.diff].hot),notag:1});if(PACE[p.g]&&PACE[p.g].hot)hotUsed++;
+  const c=choose(T().GREEN,"G:"+cfg.theme,{prog});m=p.t;s=c.t;clips=[cid("pace",p.g,p.i),cid("green",c.g,c.i)]}
+ else if(state==="PAUSE"){const u=choose(CUE,"cue",{notag:1}),c=choose(T().PAUSE,"P:"+cfg.theme,{prog});m=u.t;s=c.t;clips=[cid("cue",u.g,u.i),cid("pause",c.g,c.i)]}
+ else{const f=(gt-finalStart)/FL,sg=f<.35?0:f<.75?1:2,r=choose(T().FINAL,"F:"+cfg.theme,{stage:sg}),x=r.t.split("|");m=x[0];s=x[1]||"";clips=[cid("final",r.g,r.i)]}
+ turnPicks++;return {main:m,sub:s,clips};
+}
+function mkRescue(){const r=choose({r:G(1,T().RESC)},"RS:"+cfg.theme,{notag:1}),x=r.t.split("|");turnPicks++;return {main:x[0],sub:x[1]||"",clips:[cid("rescue","r",r.i)]}}
+function holdFor(e){const n=(e.main+e.sub).length;let ms=((st==="FINAL"?7500:5000)+Math.max(0,n-16)*200)*(cfg.spd==="slow"?1.4:1);
+ return ms}
+function push(e,prio){Voice.preload(e);if(prio){Q=[e];if(cur)holdUntil=Math.min(holdUntil,shownAt+2500)}else if(Q.length<2)Q.push(e)}
+function dlgTick(){
+ if(!Q.length)return;
+ if(cur&&!(gt>=holdUntil&&Voice.free()))return; /* 表示時間が過ぎ、かつ音声が終わって間を置いてから次へ */
+ if(!Voice.ready(Q[0]))return;
+ cur=Q.shift();shownAt=gt;$("main").textContent=cur.main;$("sub").textContent=cur.sub;
+ Voice.play(cur); /* 表示と同時に音声開始（ファイルが無ければ文字のみ） */
+ holdUntil=outro?Infinity:gt+Math.max(holdFor(cur),Voice.dur(cur)*1000+1200);
+}
+
+/* ---- ターン／フェーズ ---- */
+function newTurn(kind,isStart,rescue){
+ setSt(kind);tStart=gt;turnPicks=0;hotUsed=0;
+ const D=DIFF[cfg.diff],m=mild();
+ let len=(kind==="GREEN"?R(D.g[0],D.g[1])*(m?.85:1):(rescue?R(12,18):R(D.p[0],D.p[1]))*(m?1.25:1))*1000;const rem=finalStart-gt;
+ if(len>rem)len=rem;else if(rem-len<8000)len=rem;tLen=Math.max(len,500);
+ $("tL").textContent="ターン："+(kind==="GREEN"?"動かす":"休憩");
+ const si=Math.floor(Math.random()*T().START.length),sx=T().START[si].split("|");
+ push(isStart?{main:sx[0],sub:sx[1]||"",clips:["start_"+pad2(si+1)]}:rescue?mkRescue():mk(kind),true);
+ nextPick=gt+(isStart?6000:kind==="GREEN"?R(5,11)*1000:R(7,9)*1000)*sp();
+ beep(kind==="GREEN"?[660]:[330]);vib(kind==="GREEN"?[60]:[120,60,120]);
+}
+function startFinal(){
+ setSt("FINAL");tStart=gt;tLen=total-finalStart;turnPicks=0;outro=false;$("tL").textContent="ターン：最終フェーズ";
+ $("pn").classList.add("hide");$("gu").classList.add("hide");
+ push(mk("FINAL"),true);nextPick=gt+R(9,14)*1000*sp();beep([660,880]);vib([100,60,100,60,200]);
+}
+function doOutro(){
+ outro=true;document.body.classList.add("soft");
+ const r=choose(T().END,"E:"+cfg.theme,{notag:1}),x=r.t.split("|");
+ push({main:x[0],sub:x[1]||"",clips:[cid("end",r.g,r.i)]},true);
+}
+function pinch(){
+ if(!running||paused||cd>0||st==="FINAL"||gt<pnCool)return;
+ pinches++;pnCool=gt+20000;rec.pn.push(+(gt/total).toFixed(3));if(rec.pn.length>8)rec.pn.shift();saveRec();
+ if(st==="GREEN")newTurn("PAUSE",false,true);
+ else{tLen=Math.min(finalStart-tStart,Math.max(tLen,gt-tStart+8000));push(mkRescue(),true);nextPick=gt+R(7,9)*1000*sp()}
+}
+function advance(dt){
+ gt+=dt;
+ if(gt>=total){gt=total;finish(false);return}
+ if(st!=="FINAL"){
+  if(gt>=finalStart)startFinal();
+  else if(gt>=tStart+tLen)newTurn(st==="GREEN"?"PAUSE":"GREEN");
+ }
+ if(st==="FINAL"){
+  if(!outro&&gt>=outroStart)doOutro();
+  else if(!outro&&gt>=nextPick&&Q.length<2){push(mk("FINAL"));nextPick=gt+R(9,14)*1000*sp()}
+ }else if(gt>=nextPick&&Q.length<2){push(mk(st));nextPick=gt+(st==="GREEN"?R(5,11):R(7,9))*1000*sp()}
+ dlgTick();
+}
+function paint(){
+ const a=Math.min(1,gt/total),t=Math.min(1,(gt-tStart)/tLen);
+ $("aF").style.width=a*100+"%";$("aP").textContent=Math.floor(a*100)+"%";
+ $("tF").style.width=t*100+"%";$("tP").textContent=Math.floor(t*100)+"%";
+ $("pn").disabled=gt<pnCool;
+}
+function begin(){newTurn("GREEN",true);dlgTick()}
+function step(now){const dt=Math.min(now-last,250);last=now;
+ if(running&&!paused){
+  Voice.tick(dt);
+  if(cd>0){cd-=dt;if(cd<=0){cd=0;begin()}else{const n=Math.ceil(cd/1000);if(n!==cdN){cdN=n;$("main").textContent=n;$("sub").textContent=n===3?"準備はいい？":"…";beep([440])}}}
+  else advance(dt);
+  if(running)paint()}}
+function loop(){loopId=requestAnimationFrame(loop);step(performance.now())}
+
+/* ---- 開始・終了・一時停止・リセット ---- */
+function show(id){["setup","play","result"].forEach(x=>$(x).classList.toggle("hide",x!==id))}
+function startGame(){
+ cancelAnimationFrame(loopId);Voice.stop();Voice.unlock();
+ mins=cfg.time==="c"?Math.min(120,Math.max(1,parseFloat($("custom").value)||5)):cfg.time;saveCfg();
+ FL=60000;total=mins*60000+FL;finalStart=total-FL; /* 最終フェーズは固定1分（プレイ時間＋1分） */
+
+ const OU=Math.min(5500,FL*.3);outroStart=total-OU;
+ HS={};lastTag="";lastTxt="";Q=[];cur=null;holdUntil=0;gt=0;tStart=0;tLen=1;outro=false;paused=false;running=true;rGu=0;rRst=0;pinches=0;pnCool=0;cd=3000;cdN=0;risks=rec.gv.concat(rec.pn);
+ if(!AC&&cfg.se){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){AC=null}}
+ document.body.dataset.fx=cfg.fx;document.body.classList.remove("soft","paused");
+ $("gA").classList.toggle("hide",!cfg.ga);$("gT").classList.toggle("hide",!cfg.gt);
+ $("gA").style.setProperty("--fp",(FL/total*100)+"%");$("gu").textContent=GU;$("pz").classList.add("hide");
+ $("main").textContent="";$("sub").textContent="";$("gu").classList.remove("hide");$("pn").classList.remove("hide");$("pn").disabled=false;$("tL").textContent="ターン";
+ setSt("READY");show("play");paint();wl(true);
+ last=performance.now();loop();
+}
+function finish(gu){
+ running=false;cancelAnimationFrame(loopId);if(gu)Voice.stop();else Voice.drain();document.body.classList.remove("soft","paused");$("pz").classList.add("hide");wl(false);
+ rec.tries++;if(!gu)rec.clears++;rec.best=Math.max(rec.best,gt);if(gu){rec.gv.push(+(gt/total).toFixed(3));if(rec.gv.length>8)rec.gv.shift()}saveRec();
+ const gi=Math.floor(Math.random()*T().GU.length),x=(gu?T().GU[gi]:choose(T().END,"R:"+cfg.theme,{notag:1}).t).split("|");
+ if(gu&&cfg.tts){const u=clipUrl(cfg.theme,"giveup_"+pad2(gi+1));Voice.probe(u).then(c=>{if(c.ok&&!running)Voice.playUrls([u])})}
+ $("rtl").textContent=gu?"途中終了":"完走！";$("rm").textContent=x[0];$("rsub").textContent=x[1]||"";
+ $("rtime").textContent="所要時間："+fmt(gt)+"（設定 "+mins+"分＋最終フェーズ1分）";$("rth").textContent="プレイテーマ："+T().name+"　累計完走："+rec.clears+"回";vib([200,80,300]);
+ setSt("FINISH");beep(gu?[330]:[523,784]);show("result");
+}
+function setPause(on){
+ if(!running||paused===on)return;paused=on;if(on)Voice.pause();else Voice.resume(); /* 一時停止中は音声も停止し、再開時は止めた位置から続ける */
+ document.body.classList.toggle("paused",on);$("pz").classList.toggle("hide",!on);
+ $("rst").textContent=RS;rRst=0;if(!on)last=performance.now();
+}
+function toSetup(){Voice.stop();wl(false);$("rec").textContent=recText();running=false;paused=false;cancelAnimationFrame(loopId);document.body.classList.remove("soft","paused");
+ $("pz").classList.add("hide");setSt("READY");document.body.dataset.fx=cfg.fx;show("setup")}
+const GU="がまんできなかった…（申告）",RS="リセット（設定へ戻る）";
+$("go").onclick=startGame;$("again").onclick=startGame;$("back").onclick=toSetup;
+$("pn").onclick=pinch;$("pb").onclick=()=>setPause(true);$("rsm").onclick=()=>setPause(false);
+$("gu").onclick=()=>{if(!rGu){rGu=1;$("gu").textContent="本当に？もう一度タップ";setTimeout(()=>{if(rGu&&running){rGu=0;$("gu").textContent=GU}},3000);return}rGu=0;finish(true)};
+$("rst").onclick=()=>{if(!rRst){rRst=1;$("rst").textContent="本当にリセット？もう一度タップ";return}rRst=0;toSetup()};
+document.addEventListener("visibilitychange",()=>{if(document.hidden)setPause(true);else if(running)wl(true)});
+$("rec").textContent=recText();
+(function(){const f=$("fx");for(let i=0;i<22;i++){const d=document.createElement("div"),z=R(50,170);
+ d.className="bk "+(i%3?"a":"b");d.style.cssText=`width:${z}px;height:${z}px;left:${R(-5,100)}%;top:${R(30,100)}%;--dx:${R(-60,60)}px;animation-duration:${R(9,22)}s;animation-delay:${-R(0,20)}s`;f.appendChild(d)}})();
+</script></body></html>
